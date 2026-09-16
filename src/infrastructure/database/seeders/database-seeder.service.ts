@@ -1,4 +1,5 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { seedDemoCatalog } from './demo-catalog.seeder';
 
 @Injectable()
 export class DatabaseSeederService implements OnModuleInit {
@@ -7,7 +8,7 @@ export class DatabaseSeederService implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     if (process.env.NODE_ENV === 'production') return;
     try {
-      this.logger.log('ℹ️ Verificando estado inicial de seeders...');
+      await seedDemoCatalog();
     } catch (error: any) {
       this.logger.error(`❌ Error en seeders: ${error.message}`);
     }
