@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { LectoresModule } from './lectores/lectores.module';
 
 @Module({
-  imports: [],
-  exports: [],
+  imports: [LectoresModule],
+  exports: [LectoresModule],
 })
 export class BusinessModule {}
