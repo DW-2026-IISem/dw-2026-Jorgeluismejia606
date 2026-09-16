@@ -1,0 +1,33 @@
+export enum Rol {
+  ADMIN = 'ADMIN',
+  BIBLIOTECARIO = 'BIBLIOTECARIO',
+  LECTOR = 'LECTOR',
+  CARTERA = 'CARTERA',
+  AUDITOR = 'AUDITOR',
+}
+
+export enum EstadoEjemplar {
+  DISPONIBLE = 'DISPONIBLE',
+  PRESTADO = 'PRESTADO',
+  RESERVADO = 'RESERVADO',
+  DANADO = 'DAÑADO',
+  PERDIDO = 'PERDIDO',
+  MANTENIMIENTO = 'MANTENIMIENTO',
+}
+
+export enum EstadoPrestamo {
+  ACTIVO = 'ACTIVO',
+  DEVUELTO = 'DEVUELTO',
+  VENCIDO = 'VENCIDO',
+}
+
+export enum EstadoReserva {
+  PENDIENTE = 'PENDIENTE',
+  ATENDIDA = 'ATENDIDA',
+  CANCELADA = 'CANCELADA',
+}
+
+export enum EstadoMulta {
+  PENDIENTE = 'PENDIENTE',
+  PAGADA = 'PAGADA',
+}
