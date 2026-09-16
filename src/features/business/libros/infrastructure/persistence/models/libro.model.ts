@@ -1,5 +1,5 @@
-import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, ForeignKey, BelongsTo, HasMany } from 'sequelize-typescript';
-import { CategoriaModel } from '../../../categorias/infrastructure/persistence/models/categoria.model';
+import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, ForeignKey, BelongsTo } from 'sequelize-typescript';
+import { CategoriaModel } from '../../../../categorias/infrastructure/persistence/models/categoria.model';
 
 @Table({ tableName: 'libros' })
 export class LibroModel extends Model {
@@ -23,7 +23,4 @@ export class LibroModel extends Model {
 
   @Column({ type: DataType.BOOLEAN, defaultValue: true })
   declare is_active: boolean;
-
-  @HasMany(() => require('../../../ejemplares/infrastructure/persistence/models/ejemplar.model').EjemplarModel)
-  declare ejemplares: unknown[];
 }

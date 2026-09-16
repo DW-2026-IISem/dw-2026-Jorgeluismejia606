@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException, Inject } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
-import { SEQUELIZE_TOKEN } from '../../../../../common/constants/database.constants';
-import { PrestamoModel } from '../infrastructure/persistence/models/prestamo.model';
-import { EjemplarModel } from '../../ejemplares/infrastructure/persistence/models/ejemplar.model';
-import { LectorModel } from '../../lectores/infrastructure/persistence/models/lector.model';
-import { ReservaModel } from '../../reservas/infrastructure/persistence/models/reserva.model';
-import { MultaModel } from '../../multas/infrastructure/persistence/models/multa.model';
-import { EstadoEjemplar, EstadoPrestamo, EstadoReserva, EstadoMulta } from '../../../../../common/enums';
+import { SEQUELIZE_TOKEN } from '@/common/constants/database.constants';
+import { PrestamoModel } from '@/features/business/prestamos/infrastructure/persistence/models/prestamo.model';
+import { EjemplarModel } from '@/features/business/ejemplares/infrastructure/persistence/models/ejemplar.model';
+import { LectorModel } from '@/features/business/lectores/infrastructure/persistence/models/lector.model';
+import { ReservaModel } from '@/features/business/reservas/infrastructure/persistence/models/reserva.model';
+import { MultaModel } from '@/features/business/multas/infrastructure/persistence/models/multa.model';
+import { EstadoEjemplar, EstadoPrestamo, EstadoReserva, EstadoMulta } from '@/common/enums';
 import { CreatePrestamoDto, DevolverPrestamoDto, RenovarPrestamoDto } from '../dto/prestamo.dto';
 
 @Injectable()
@@ -23,7 +23,6 @@ export class PrestamosBusinessService {
     const ejemplar = await EjemplarModel.findByPk(dto.ejemplarId);
     if (!ejemplar || !ejemplar.is_active) throw new NotFoundException('Ejemplar no encontrado');
 
-    // RN-01: Disponibilidad
     if (ejemplar.estado !== EstadoEjemplar.DISPONIBLE) {
       throw new BadRequestException(`RN-01: El ejemplar no está DISPONIBLE (Estado: ${ejemplar.estado})`);
     }
@@ -59,7 +58,6 @@ export class PrestamosBusinessService {
 
       const ejemplar = await EjemplarModel.findByPk(prestamo.ejemplar_id, { transaction: t });
 
-      // RN-08: Daños y pérdidas
       if (dto.perdido) {
         await ejemplar?.update({ estado: EstadoEjemplar.PERDIDO }, { transaction: t });
         await MultaModel.create({
@@ -79,11 +77,9 @@ export class PrestamosBusinessService {
           fecha_generacion: new Date(),
         }, { transaction: t });
       } else {
-        // RN-06: Vuelve a DISPONIBLE
         await ejemplar?.update({ estado: EstadoEjemplar.DISPONIBLE }, { transaction: t });
       }
 
-      // RN-08: Cálculo de mora
       if (fechaDev.getTime() > prestamo.fecha_fin.getTime()) {
         const diffMs = fechaDev.getTime() - prestamo.fecha_fin.getTime();
         const dias = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
@@ -107,7 +103,6 @@ export class PrestamosBusinessService {
       throw new BadRequestException('Solo préstamos activos pueden ser renovados');
     }
 
-    // RN-05: Validar reservas activas sobre el libro
     const reservasEnEspera = await ReservaModel.count({
       where: {
         libro_id: prestamo.ejemplar.libro_id,

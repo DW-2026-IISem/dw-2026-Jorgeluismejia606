@@ -37,7 +37,7 @@ describe('PrestamosBusinessService — Verificación de Reglas de Negocio', () =
       estado: EstadoPrestamo.ACTIVO,
       ejemplar: { libro_id: 10 },
     } as any);
-    vi.spyOn(ReservaModel, 'count').mockResolvedValue(1); // 1 reserva pendiente
+    vi.spyOn(ReservaModel, 'count').mockResolvedValue(1);
 
     await expect(
       service.renovar(1, { nuevaFechaFin: '2026-12-15' }),

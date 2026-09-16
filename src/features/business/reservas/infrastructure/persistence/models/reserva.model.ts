@@ -1,7 +1,7 @@
 import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { EstadoReserva } from '../../../../../../common/enums';
-import { LectorModel } from '../../../lectores/infrastructure/persistence/models/lector.model';
-import { LibroModel } from '../../../libros/infrastructure/persistence/models/libro.model';
+import { LectorModel } from '../../../../lectores/infrastructure/persistence/models/lector.model';
+import { LibroModel } from '../../../../libros/infrastructure/persistence/models/libro.model';
 
 @Table({ tableName: 'reservas' })
 export class ReservaModel extends Model {

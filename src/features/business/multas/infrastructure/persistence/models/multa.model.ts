@@ -1,6 +1,6 @@
 import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { EstadoMulta } from '../../../../../../common/enums';
-import { PrestamoModel } from '../../../prestamos/infrastructure/persistence/models/prestamo.model';
+import { PrestamoModel } from '../../../../prestamos/infrastructure/persistence/models/prestamo.model';
 
 @Table({ tableName: 'multas' })
 export class MultaModel extends Model {

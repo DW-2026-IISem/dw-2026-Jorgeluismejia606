@@ -1,7 +1,7 @@
-import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, ForeignKey, BelongsTo, HasMany } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { EstadoPrestamo } from '../../../../../../common/enums';
-import { LectorModel } from '../../../lectores/infrastructure/persistence/models/lector.model';
-import { EjemplarModel } from '../../../ejemplares/infrastructure/persistence/models/ejemplar.model';
+import { LectorModel } from '../../../../lectores/infrastructure/persistence/models/lector.model';
+import { EjemplarModel } from '../../../../ejemplares/infrastructure/persistence/models/ejemplar.model';
 
 @Table({ tableName: 'prestamos' })
 export class PrestamoModel extends Model {
@@ -45,7 +45,4 @@ export class PrestamoModel extends Model {
 
   @BelongsTo(() => EjemplarModel)
   declare ejemplar: EjemplarModel;
-
-  @HasMany(() => require('../../../multas/infrastructure/persistence/models/multa.model').MultaModel)
-  declare multas: unknown[];
 }

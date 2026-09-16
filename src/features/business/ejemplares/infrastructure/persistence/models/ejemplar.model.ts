@@ -1,7 +1,7 @@
 import { Table, Column, Model, DataType, PrimaryKey, AutoIncrement, ForeignKey, BelongsTo } from 'sequelize-typescript';
 import { EstadoEjemplar } from '../../../../../../common/enums';
-import { LibroModel } from '../../../libros/infrastructure/persistence/models/libro.model';
-import { SedeModel } from '../../../sedes/infrastructure/persistence/models/sede.model';
+import { LibroModel } from '../../../../libros/infrastructure/persistence/models/libro.model';
+import { SedeModel } from '../../../../sedes/infrastructure/persistence/models/sede.model';
 
 @Table({ tableName: 'ejemplares' })
 export class EjemplarModel extends Model {
