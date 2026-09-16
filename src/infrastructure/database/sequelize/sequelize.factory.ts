@@ -5,12 +5,18 @@ import { LectorModel } from '../../../features/business/lectores/infrastructure/
 import { CategoriaModel } from '../../../features/business/categorias/infrastructure/persistence/models/categoria.model';
 import { AutorModel } from '../../../features/business/autores/infrastructure/persistence/models/autor.model';
 import { SedeModel } from '../../../features/business/sedes/infrastructure/persistence/models/sede.model';
+import { LibroModel } from '../../../features/business/libros/infrastructure/persistence/models/libro.model';
+import { LibroAutorModel } from '../../../features/business/libros/infrastructure/persistence/models/libro-autor.model';
+import { EjemplarModel } from '../../../features/business/ejemplares/infrastructure/persistence/models/ejemplar.model';
 
 export const ALL_MODELS: any[] = [
   LectorModel,
   CategoriaModel,
   AutorModel,
   SedeModel,
+  LibroModel,
+  LibroAutorModel,
+  EjemplarModel,
 ];
 
 export async function createSequelizeInstance(config: DatabaseConfig): Promise<Sequelize> {
