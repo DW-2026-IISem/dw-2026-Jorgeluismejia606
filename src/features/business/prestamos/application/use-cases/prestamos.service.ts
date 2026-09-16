@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException, Inject } from '@nestjs/common';
 import { Sequelize } from 'sequelize-typescript';
-import { SEQUELIZE_TOKEN } from '../../../../common/constants/database.constants';
+import { SEQUELIZE_TOKEN } from '../../../../../common/constants/database.constants';
 import { PrestamoModel } from '../infrastructure/persistence/models/prestamo.model';
 import { EjemplarModel } from '../../ejemplares/infrastructure/persistence/models/ejemplar.model';
 import { LectorModel } from '../../lectores/infrastructure/persistence/models/lector.model';
 import { ReservaModel } from '../../reservas/infrastructure/persistence/models/reserva.model';
 import { MultaModel } from '../../multas/infrastructure/persistence/models/multa.model';
-import { EstadoEjemplar, EstadoPrestamo, EstadoReserva, EstadoMulta } from '../../../../common/enums';
+import { EstadoEjemplar, EstadoPrestamo, EstadoReserva, EstadoMulta } from '../../../../../common/enums';
 import { CreatePrestamoDto, DevolverPrestamoDto, RenovarPrestamoDto } from '../dto/prestamo.dto';
 
 @Injectable()
