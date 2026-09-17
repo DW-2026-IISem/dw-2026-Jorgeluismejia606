@@ -18,5 +18,5 @@ try {
   execSync(`fuser -k ${port}/tcp`, { stdio: 'ignore' });
   console.log(`✅ Puerto ${port} liberado`);
 } catch {
-  console.log(`ℹ️  Puerto ${port} listo`);
+  console.log(`ℹ️ Puerto ${port} listo`);
 }
