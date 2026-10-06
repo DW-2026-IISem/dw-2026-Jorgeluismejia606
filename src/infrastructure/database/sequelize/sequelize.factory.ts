@@ -12,7 +12,7 @@ import { EjemplarModel } from '../../../features/business/ejemplares/infrastruct
 import { PrestamoModel } from '../../../features/business/prestamos/infrastructure/persistence/models/prestamo.model';
 import { ReservaModel } from '../../../features/business/reservas/infrastructure/persistence/models/reserva.model';
 import { MultaModel } from '../../../features/business/multas/infrastructure/persistence/models/multa.model';
-
+import { Client } from '../../../features/business/client/client.model';
 export const ALL_MODELS: any[] = [
   LectorModel,
   CategoriaModel,
@@ -24,6 +24,7 @@ export const ALL_MODELS: any[] = [
   PrestamoModel,
   ReservaModel,
   MultaModel,
+  Client,
 ];
 
 export async function createSequelizeInstance(config: DatabaseConfig): Promise<Sequelize> {
