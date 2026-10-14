@@ -1,25 +1,31 @@
-FROM node:22-alpine AS dependencies
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
+# Stage 1: Build
+FROM node:20-alpine AS builder
 
-FROM node:22-alpine AS builder
 WORKDIR /app
+
 COPY package*.json ./
 RUN npm ci
+
 COPY . .
 RUN npm run build
+RUN npm prune --production
 
-FROM node:22-alpine AS production
+# Stage 2: Production Runner (No-Root)
+FROM node:20-alpine AS runner
+
 WORKDIR /app
+
 ENV NODE_ENV=production
-ENV PORT=3000
-COPY --from=dependencies /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY package*.json ./
-COPY .env.example ./
-RUN addgroup -S app && adduser -S app -G app && mkdir -p /app/data && chown -R app:app /app
-USER app
-EXPOSE 3000
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD node -e "fetch('http://127.0.0.1:3000/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
-CMD ["node", "dist/main"]
+ENV PORT=4000
+
+# Usuario sin privilegios integrado en Alpine Node
+USER node
+
+# Copiar artefactos y dependencias de produccion con los permisos de usuario node
+COPY --chown=node:node --from=builder /app/package*.json ./
+COPY --chown=node:node --from=builder /app/node_modules ./node_modules
+COPY --chown=node:node --from=builder /app/dist ./dist
+
+EXPOSE 4000
+
+CMD ["node", "dist/main.js"]
