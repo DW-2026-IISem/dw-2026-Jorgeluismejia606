@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { envConfig } from './config/environment/env.config';
+import { validate } from './config/environment/env.validation';
 import { SequelizeDatabaseModule } from './infrastructure/database/sequelize/sequelize.module';
 import { SecurityModule } from './infrastructure/security/security.module';
 import { BusinessModule } from './features/business/business.module';
@@ -10,13 +10,12 @@ import { AuthModule } from './features/auth/auth.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [envConfig],
-      envFilePath: '.env',
+      validate,
     }),
     SequelizeDatabaseModule,
     SecurityModule,
-    BusinessModule,
     AuthModule,
+    BusinessModule,
   ],
 })
 export class AppModule {}

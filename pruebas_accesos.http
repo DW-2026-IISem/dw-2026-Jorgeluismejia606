@@ -1,0 +1,136 @@
+@baseUrl = http://localhost:4000/api
+
+### ===================================================
+### 0. AUTENTICACIÓN: REGISTRO Y LOGIN
+### ===================================================
+
+### Registro de Administrador
+POST {{baseUrl}}/auth/registro
+Content-Type: application/json
+
+{
+  "nombre": "Jorge Administrador",
+  "email": "admin@lecturaabierta.com",
+  "password": "Password123*",
+  "rol": "ADMIN"
+}
+
+### Registro de Lector Estándar
+POST {{baseUrl}}/auth/registro
+Content-Type: application/json
+
+{
+  "nombre": "Carlos Lector",
+  "email": "lector@lecturaabierta.com",
+  "password": "Password123*",
+  "rol": "LECTOR"
+}
+
+### Login Admin -> Devuelve accessToken y refreshToken
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@lecturaabierta.com",
+  "password": "Password123*"
+}
+
+### Login Lector
+# @name loginLector
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "lector@lecturaabierta.com",
+  "password": "Password123*"
+}
+
+@adminToken = {{loginAdmin.response.body.accessToken}}
+@adminRefreshToken = {{loginAdmin.response.body.refreshToken}}
+@lectorToken = {{loginLector.response.body.accessToken}}
+
+### ===================================================
+### 1. NIVEL 1: SIN AUTENTICACIÓN
+### ===================================================
+
+### [EXITOSA] Lectores Público (200 OK)
+GET {{baseUrl}}/lectores/publico
+
+### [EXITOSA] Préstamos Estadísticas Públicas (200 OK)
+GET {{baseUrl}}/prestamos/estadisticas-publicas
+
+### ===================================================
+### 2. NIVEL 2: SOLO AUTENTICACIÓN (x-api-key)
+### ===================================================
+
+### [FALSA / ERROR] Sin cabecera x-api-key (401 Unauthorized)
+GET {{baseUrl}}/lectores/autenticado-basico
+
+### [EXITOSA] Con cabecera x-api-key correcta (200 OK)
+GET {{baseUrl}}/lectores/autenticado-basico
+x-api-key: lectura-abierta-basic-key
+
+### [FALSA / ERROR] Préstamos resumen sin cabecera (401 Unauthorized)
+GET {{baseUrl}}/prestamos/resumen-interno
+
+### [EXITOSA] Préstamos resumen con cabecera correcta (200 OK)
+GET {{baseUrl}}/prestamos/resumen-interno
+x-api-key: lectura-abierta-basic-key
+
+### ===================================================
+### 3. NIVEL 3: JWT TOKEN + REFRESH TOKEN
+### ===================================================
+
+### [FALSA / ERROR] Consulta sin token Bearer (401 Unauthorized)
+GET {{baseUrl}}/prestamos
+
+### [EXITOSA] Consulta con JWT Bearer válido (200 OK)
+GET {{baseUrl}}/prestamos
+Authorization: Bearer {{adminToken}}
+
+### [EXITOSA] Consulta lectores con JWT Bearer válido (200 OK)
+GET {{baseUrl}}/lectores/jwt
+Authorization: Bearer {{lectorToken}}
+
+### [EXITOSA] Refrescar Access Token usando Refresh Token (200 OK)
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{adminRefreshToken}}"
+}
+
+### [FALSA / ERROR] Refrescar con Refresh Token inválido o corrupto (403 Forbidden)
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "token-invalido-123"
+}
+
+### ===================================================
+### 4. NIVEL 4: JWT + REFRESH + RBAC
+### ===================================================
+
+### [FALSA / ERROR] Usuario con rol LECTOR intentando crear recurso restringido a ADMIN (403 Forbidden)
+POST {{baseUrl}}/lectores
+Authorization: Bearer {{lectorToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Intento Denegado",
+  "email": "denegado@test.com",
+  "documento": "999999"
+}
+
+### [EXITOSA] Usuario con rol ADMIN creando recurso con éxito (201 Created)
+POST {{baseUrl}}/lectores
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Lector Autorizado",
+  "email": "autorizado@test.com",
+  "documento": "12345678"
+}
