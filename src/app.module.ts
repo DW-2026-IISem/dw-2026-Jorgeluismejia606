@@ -5,6 +5,7 @@ import { SequelizeDatabaseModule } from './infrastructure/database/sequelize/seq
 import { SecurityModule } from './infrastructure/security/security.module';
 import { BusinessModule } from './features/business/business.module';
 import { AuthModule } from './features/auth/auth.module';
+import { HealthModule } from './features/health/health.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { AuthModule } from './features/auth/auth.module';
     SecurityModule,
     AuthModule,
     BusinessModule,
+    HealthModule,
   ],
 })
 export class AppModule {}
