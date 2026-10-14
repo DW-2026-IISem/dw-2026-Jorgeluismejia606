@@ -20,7 +20,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = authHeader.split(' ')[1];
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: this.configService.get<string>('JWT_SECRET') || 'secreto-super-seguro-lectura-abierta-2026',
+        secret: this.configService.getOrThrow<string>('JWT_SECRET'),
       });
       request['user'] = payload;
       return true;

@@ -12,7 +12,7 @@ import { RolesGuard } from './infrastructure/guards/roles.guard';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') || 'secreto-super-seguro-lectura-abierta-2026',
+        secret: config.getOrThrow<string>('JWT_SECRET'),
         signOptions: {
           expiresIn: (config.get<string>('JWT_EXPIRES_IN') || '1d') as any,
         },

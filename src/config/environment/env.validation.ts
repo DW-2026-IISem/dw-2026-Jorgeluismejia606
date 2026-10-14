@@ -9,7 +9,7 @@ export class EnvironmentVariables {
 
   @IsNumber()
   @IsOptional()
-  PORT: number = 3000;
+  PORT: number = 4000;
 
   @IsEnum(DatabaseDialect)
   DB_DIALECT: DatabaseDialect = DatabaseDialect.SQLite;
@@ -31,6 +31,9 @@ export class EnvironmentVariables {
   @IsString()
   @IsOptional()
   JWT_REFRESH_EXPIRES_IN: string = '7d';
+
+  @IsString()
+  BASIC_API_KEY: string;
 }
 
 export function validate(config: Record<string, unknown>): EnvironmentVariables {

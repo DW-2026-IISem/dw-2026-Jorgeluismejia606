@@ -5,6 +5,7 @@ import { UserModel, UserRole } from '../../infrastructure/persistence/models/use
 import { LoginDto } from '../../presentation/dto/login.dto';
 import { RegisterDto } from '../../presentation/dto/register.dto';
 import { RefreshTokenDto } from '../../presentation/dto/refresh-token.dto';
+import { BcryptPasswordHasherService } from '../../../../infrastructure/security/hashing/bcrypt-password-hasher.service';
 import * as crypto from 'crypto';
 
 @Injectable()
@@ -12,10 +13,19 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly passwordHasher: BcryptPasswordHasherService,
   ) {}
 
-  private hashData(data: string): string {
-    return crypto.createHash('sha256').update(data).digest('hex');
+  private hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token).digest('hex');
+  }
+
+  private getAccessSecret(): string {
+    return this.configService.getOrThrow<string>('JWT_SECRET');
+  }
+
+  private getRefreshSecret(): string {
+    return this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
   }
 
   async register(dto: RegisterDto) {
@@ -26,7 +36,7 @@ export class AuthService {
 
     const user = await UserModel.create({
       email: dto.email,
-      password_hash: this.hashData(dto.password),
+      password_hash: await this.passwordHasher.hash(dto.password),
       rol: dto.rol || UserRole.LECTOR,
     });
 
@@ -42,17 +52,16 @@ export class AuthService {
     const user = await UserModel.findOne({
       where: {
         email: dto.email,
-        password_hash: this.hashData(dto.password),
         is_active: true,
       },
     });
 
-    if (!user) {
+    if (!user || !(await this.passwordHasher.compare(dto.password, user.password_hash))) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.rol);
-    await user.update({ refresh_token_hash: this.hashData(tokens.refreshToken) });
+    await user.update({ refresh_token_hash: this.hashToken(tokens.refreshToken) });
 
     return {
       ...tokens,
@@ -66,10 +75,11 @@ export class AuthService {
 
   async refreshTokens(dto: RefreshTokenDto) {
     let payload: any;
-    const secret = this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh-secreto-super-seguro-2026';
 
     try {
-      payload = await this.jwtService.verifyAsync(dto.refreshToken, { secret });
+      payload = await this.jwtService.verifyAsync(dto.refreshToken, {
+        secret: this.getRefreshSecret(),
+      });
     } catch {
       throw new ForbiddenException('Refresh token expirado o inválido');
     }
@@ -79,27 +89,28 @@ export class AuthService {
       throw new ForbiddenException('Acceso denegado');
     }
 
-    const refreshMatches = user.refresh_token_hash === this.hashData(dto.refreshToken);
+    const refreshMatches = user.refresh_token_hash === this.hashToken(dto.refreshToken);
     if (!refreshMatches) {
       throw new ForbiddenException('Refresh token no reconocido');
     }
 
     const tokens = await this.generateTokens(user.id, user.email, user.rol);
-    await user.update({ refresh_token_hash: this.hashData(tokens.refreshToken) });
+    await user.update({ refresh_token_hash: this.hashToken(tokens.refreshToken) });
 
     return tokens;
   }
 
   private async generateTokens(userId: number, email: string, rol: string) {
     const jwtPayload = { sub: userId, email, rol };
+    const accessExpiresIn = this.configService.get<string>('JWT_EXPIRES_IN') || '15m';
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(jwtPayload, {
-        secret: this.configService.get<string>('JWT_SECRET') || 'secreto-super-seguro-lectura-abierta-2026',
-        expiresIn: (this.configService.get<string>('JWT_EXPIRES_IN') || '15m') as any,
+        secret: this.getAccessSecret(),
+        expiresIn: accessExpiresIn as any,
       }),
       this.jwtService.signAsync(jwtPayload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET') || 'refresh-secreto-super-seguro-2026',
+        secret: this.getRefreshSecret(),
         expiresIn: (this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') || '7d') as any,
       }),
     ]);
@@ -108,7 +119,7 @@ export class AuthService {
       accessToken,
       refreshToken,
       tokenType: 'Bearer',
-      expiresIn: '15m',
+      expiresIn: accessExpiresIn,
     };
   }
 }

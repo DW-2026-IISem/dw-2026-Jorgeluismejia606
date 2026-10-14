@@ -11,8 +11,8 @@ import { JwtTokenService } from './tokens/jwt-token.service';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('environment.jwt.secret'),
-        signOptions: { expiresIn: config.get<string>('environment.jwt.expiresIn') as any },
+        secret: config.getOrThrow<string>('JWT_SECRET'),
+        signOptions: { expiresIn: (config.get<string>('JWT_EXPIRES_IN') || '15m') as any },
       }),
     }),
   ],
