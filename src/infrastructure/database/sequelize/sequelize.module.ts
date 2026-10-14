@@ -1,24 +1,26 @@
 import { Module, Global } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Sequelize } from 'sequelize-typescript';
-import { SEQUELIZE_TOKEN } from '../../../common/constants/database.constants';
-import { DatabaseConfig } from '../../../config/environment/env.interface';
-import { createSequelizeInstance } from './sequelize.factory';
-import { DatabaseSeederService } from '../seeders/database-seeder.service';
+import { getSequelizeOptions } from './sequelize.options';
 
 @Global()
 @Module({
+  imports: [ConfigModule],
   providers: [
     {
-      provide: SEQUELIZE_TOKEN,
-      useFactory: async (configService: ConfigService): Promise<Sequelize> => {
-        const dbConfig = configService.get<DatabaseConfig>('environment.database')!;
-        return createSequelizeInstance(dbConfig);
+      provide: 'SEQUELIZE',
+      useFactory: async (configService: ConfigService) => {
+        const options = getSequelizeOptions(configService);
+        const sequelize = new Sequelize(options);
+        
+        await sequelize.authenticate();
+        // force: false, alter: false evita el DROP TABLE conflictivo en SQLite
+        await sequelize.sync({ force: false, alter: false });
+        return sequelize;
       },
       inject: [ConfigService],
     },
-    DatabaseSeederService,
   ],
-  exports: [SEQUELIZE_TOKEN],
+  exports: ['SEQUELIZE'],
 })
 export class SequelizeDatabaseModule {}
