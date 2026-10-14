@@ -1,3 +1,4 @@
+import { AuthModule } from '../../auth/auth.module';
 import { Module } from '@nestjs/common';
 import { LECTOR_REPOSITORY } from './domain/interfaces/lector-repository.interface';
 import { LectorRepository } from './infrastructure/persistence/repositories/lector.repository';

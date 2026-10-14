@@ -1,3 +1,4 @@
+import { AuthModule } from '../../auth/auth.module';
 import { Module } from '@nestjs/common';
 import { PrestamosBusinessService } from './application/use-cases/prestamos.service';
 import { PrestamosController } from './presentation/http/controllers/prestamos.controller';
