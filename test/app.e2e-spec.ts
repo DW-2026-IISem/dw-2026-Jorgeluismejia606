@@ -1,36 +1,74 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import request from 'supertest';
 import { App } from 'supertest/types';
-import { AppModule } from './../src/app.module.js';
+import { AppModule } from './../src/app.module';
+import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor';
 
-describe('AppController (e2e)', () => {
+describe('LecturaAbierta API (e2e)', () => {
   let app: INestApplication<App>;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api');
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalInterceptors(new ResponseInterceptor());
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('GET /api/health devuelve 200 y estado ok', () => {
     return request(app.getHttpServer())
-      .get('/')
+      .get('/api/health')
       .expect(200)
-      .expect('Hello World!');
+      .expect((res) => {
+        expect(res.body.status).toBe('ok');
+        expect(res.body.checks.database.status).toBe('up');
+      });
   });
 
-  it('/health (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/health')
-      .expect(200)
-      .expect({ status: 'ok', service: 'lecturaabierta-api' });
+  it('GET /api/lectores/publico es accesible sin autenticación', () => {
+    return request(app.getHttpServer()).get('/api/lectores/publico').expect(200);
   });
 
-  afterEach(async () => {
+  it('GET /api/lectores/autenticado-basico rechaza sin x-api-key (401)', () => {
+    return request(app.getHttpServer()).get('/api/lectores/autenticado-basico').expect(401);
+  });
+
+  it('GET /api/prestamos rechaza sin Bearer token (401)', () => {
+    return request(app.getHttpServer()).get('/api/prestamos').expect(401);
+  });
+
+  it('flujo de autenticación: registro, login y refresh', async () => {
+    const credentials = {
+      nombre: 'Admin E2E',
+      email: 'admin.e2e@lecturaabierta.com',
+      password: 'Password123*',
+      rol: 'ADMIN',
+    };
+
+    await request(app.getHttpServer()).post('/api/auth/registro').send(credentials).expect(201);
+
+    const login = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: credentials.email, password: credentials.password })
+      .expect(200);
+
+    expect(login.body.data.accessToken).toBeDefined();
+    expect(login.body.data.refreshToken).toBeDefined();
+
+    const refresh = await request(app.getHttpServer())
+      .post('/api/auth/refresh')
+      .send({ refreshToken: login.body.data.refreshToken })
+      .expect(200);
+
+    expect(refresh.body.data.accessToken).toBeDefined();
+  });
+
+  afterAll(async () => {
     await app.close();
   });
 });

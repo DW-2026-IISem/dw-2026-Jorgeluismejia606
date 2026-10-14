@@ -10,30 +10,42 @@ on:
       - lecturaabierta_api_V1
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  build-and-test:
-    name: Build & Code Verification
+  verify:
+    name: Lint, Tests & Build
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20.x
+      - name: Setup Node.js 22.x
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 22.x
           cache: 'npm'
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Compile TypeScript
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit Tests
+        run: npm run test:unit
+
+      - name: E2E Tests
+        run: npm run test:e2e
+
+      - name: Build
         run: npm run build
 
-  docker-build:
+  docker:
     name: Build Docker Image (No-Root)
-    needs: build-and-test
+    needs: verify
     runs-on: ubuntu-latest
 
     steps:
