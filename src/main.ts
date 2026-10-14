@@ -22,9 +22,12 @@ async function bootstrap() {
 
   setupSwagger(app);
 
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 4000;
   await app.listen(port, '0.0.0.0');
   console.log(`🚀 LecturaAbierta API corriendo en: http://localhost:${port}/api`);
   console.log(`📘 Documentación Swagger en: http://localhost:${port}/api/docs`);
 }
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('Error al iniciar la aplicación:', error);
+  process.exit(1);
+});
