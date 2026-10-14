@@ -2781,3 +2781,7 @@ Abrir Swagger:
 http://localhost:4000/api/docs
 
 ![alt text](image-74.png)
+
+http://localhost:4000/api/docs
+
+![alt text](image-75.png)
