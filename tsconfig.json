@@ -33,9 +33,6 @@
     "test",
     "**/*.spec.ts",
     "**/*.e2e-spec.ts",
-    "vitest.config.e2e.ts",
-    "src/features/business/client/**",
-    "src/config/**",
-    "src/server.ts"
+    "vitest.config.e2e.ts"
   ]
 }

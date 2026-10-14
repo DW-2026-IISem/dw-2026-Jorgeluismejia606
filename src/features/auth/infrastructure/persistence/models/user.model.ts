@@ -20,6 +20,12 @@ export class UserModel extends Model {
   declare id: number;
 
   @Column({
+    type: DataType.STRING(150),
+    allowNull: true,
+  })
+  declare nombre: string;
+
+  @Column({
     type: DataType.STRING(120),
     allowNull: false,
     unique: true,

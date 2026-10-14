@@ -35,6 +35,7 @@ export class AuthService {
     }
 
     const user = await UserModel.create({
+      nombre: dto.nombre,
       email: dto.email,
       password_hash: await this.passwordHasher.hash(dto.password),
       rol: dto.rol || UserRole.LECTOR,
@@ -42,6 +43,7 @@ export class AuthService {
 
     return {
       id: user.id,
+      nombre: user.nombre,
       email: user.email,
       rol: user.rol,
       message: 'Usuario registrado exitosamente',
@@ -67,6 +69,7 @@ export class AuthService {
       ...tokens,
       user: {
         id: user.id,
+        nombre: user.nombre,
         email: user.email,
         rol: user.rol,
       },
