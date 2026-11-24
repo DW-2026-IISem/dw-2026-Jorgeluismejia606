@@ -1,0 +1,5 @@
+import { Module } from '@nestjs/common';
+import { AutoresController } from './presentation/controllers/autores.controller';
+
+@Module({ controllers: [AutoresController] })
+export class AutoresModule {}

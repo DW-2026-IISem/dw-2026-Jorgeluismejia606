@@ -1,0 +1,20 @@
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { PermissionGuard } from '@/features/auth/infrastructure/guards/permission.guard';
+import { AutorModel } from '../../infrastructure/persistence/models/autor.model';
+
+@ApiTags('Autores')
+@ApiBearerAuth()
+@Controller('autores')
+export class AutoresController {
+  @Get()
+  @UseGuards(PermissionGuard)
+  @ApiOperation({ summary: 'Listar autores activos (para asignarlos a libros) (RBAC)' })
+  listar() {
+    return AutorModel.findAll({
+      where: { is_active: true },
+      attributes: ['id', 'nombre', 'descripcion'],
+      order: [['nombre', 'ASC']],
+    });
+  }
+}

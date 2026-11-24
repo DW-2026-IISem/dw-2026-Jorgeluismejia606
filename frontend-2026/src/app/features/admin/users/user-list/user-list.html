@@ -1,0 +1,176 @@
+<app-page-header
+  title="Usuarios"
+  subtitle="Identidades del sistema. La contraseña nunca sale de la API."
+>
+  <p-tag [value]="rows().length + ' activos'" severity="info" [rounded]="true" />
+  <ng-container *appHasPermission="'POST /api/usuarios'">
+    <button pButton type="button" (click)="openCreate()">
+      <i pButtonIcon class="pi pi-plus"></i><span pButtonLabel>Nuevo usuario</span>
+    </button>
+  </ng-container>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
+}
+
+<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+  <p-table
+    [value]="visibleRows()"
+    [loading]="loading()"
+    [paginator]="visibleRows().length > 10"
+    [rows]="10"
+    dataKey="id"
+    tableStyleClass="min-w-3xl"
+  >
+    <ng-template #caption>
+      <div class="flex items-center gap-2">
+        <i class="pi pi-search text-slate-400"></i>
+        <input
+          pInputText
+          type="search"
+          aria-label="Buscar usuarios"
+          placeholder="Buscar por usuario o email…"
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+          class="w-full"
+        />
+      </div>
+    </ng-template>
+    <ng-template #header>
+      <tr>
+        <th pSortableColumn="username">Usuario <p-sort-icon field="username" /></th>
+        <th>Email</th>
+        <th>Estado</th>
+        <th class="w-48 text-right">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-user>
+      <tr>
+        <td>
+          <p class="font-medium">{{ user.username }}</p>
+          <p class="text-xs text-slate-400">#{{ user.id }}</p>
+        </td>
+        <td class="text-sm">{{ user.email }}</td>
+        <td><app-status-tag [status]="user.status" /></td>
+        <td>
+          <div class="flex justify-end gap-1">
+            <ng-container *appHasPermission="'GET /api/usuarios/:id/permisos'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="info"
+                icon="pi pi-key"
+                aria-label="Ver permisos"
+                pTooltip="Ver permisos"
+                (click)="showAccess(user)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'PATCH /api/usuarios/:id'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="secondary"
+                icon="pi pi-pencil"
+                aria-label="Editar usuario"
+                pTooltip="Editar"
+                (click)="openEdit(user)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'PATCH /api/usuarios/:id/deactivate'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="warn"
+                icon="pi pi-ban"
+                aria-label="Desactivar usuario"
+                [disabled]="isSelf(user)"
+                pTooltip="Baja lógica"
+                (click)="deactivate(user)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'DELETE /api/usuarios/:id'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="danger"
+                icon="pi pi-trash"
+                aria-label="Eliminar usuario"
+                [disabled]="isSelf(user)"
+                [pTooltip]="isSelf(user) ? 'No puedes eliminar tu propio usuario' : 'Eliminar'"
+                (click)="remove(user)"
+              ></button>
+            </ng-container>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="4"><app-empty-state icon="pi pi-user" title="Sin usuarios" /></td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [header]="title()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  styleClass="w-full max-w-xl mx-4"
+>
+  <app-user-form
+    [user]="editing()"
+    [saving]="saving()"
+    [resetKey]="resetKey()"
+    (saved)="save($event)"
+    (cancelled)="dialogVisible.set(false)"
+  />
+</p-dialog>
+
+<p-dialog
+  [visible]="accessVisible()"
+  (visibleChange)="accessVisible.set($event)"
+  [header]="'Permisos de ' + (accessUser()?.username ?? '')"
+  [modal]="true"
+  [dismissableMask]="true"
+  styleClass="w-full max-w-2xl mx-4"
+>
+  <div class="mb-3 flex flex-wrap gap-1">
+    @for (role of accessRoles(); track role.id) {
+      <p-tag [value]="role.name" severity="info" [rounded]="true" />
+    } @empty {
+      <span class="text-sm text-slate-500">Sin roles activos: recibirá 403 en todo.</span>
+    }
+  </div>
+  <p-table [value]="access()" [rows]="10" [paginator]="access().length > 10">
+    <ng-template #header
+      ><tr>
+        <th>Método</th>
+        <th>Ruta</th>
+        <th>Rol</th>
+      </tr></ng-template
+    >
+    <ng-template #body let-p>
+      <tr>
+        <td><p-tag [value]="p.method" [severity]="methodSeverity(p.method)" [rounded]="true" /></td>
+        <td>
+          <code class="text-xs">{{ p.path }}</code>
+        </td>
+        <td class="text-sm">{{ p.role_name }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+</p-dialog>

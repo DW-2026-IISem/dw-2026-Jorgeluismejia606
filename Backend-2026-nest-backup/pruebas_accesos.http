@@ -1,0 +1,263 @@
+@baseUrl = http://localhost:4000/api
+@apiKey = lectura-abierta-basic-key
+
+### ===================================================
+### 0. MONITOREO Y SALUD DEL SISTEMA (ENTREGABLE D3)
+### ===================================================
+
+### [EXITOSA] Comprobación de salud y conexión activa a SQLite (200 OK)
+GET {{baseUrl}}/health
+Accept: application/json
+
+### ===================================================
+### 1. AUTENTICACIÓN: REGISTRO Y LOGIN
+### ===================================================
+
+### Requisito: `npm run db:seed` crea admin@lecturaabierta.com / Admin123!
+### El registro público ya NO acepta `rol`: siempre crea un LECTOR.
+
+### 1.1 [FALSA / ERROR] Intento de autoregistrarse como ADMIN (400 Bad Request)
+POST {{baseUrl}}/auth/registro
+Content-Type: application/json
+
+{
+  "nombre": "Intento Escalada",
+  "email": "escalada@lecturaabierta.com",
+  "password": "Password123*",
+  "rol": "ADMIN"
+}
+
+### 1.2 Registro de Lector Estándar (siempre rol LECTOR) (201 Created)
+POST {{baseUrl}}/auth/registro
+Content-Type: application/json
+
+{
+  "nombre": "Carlos Lector",
+  "email": "carlos.lector@lecturaabierta.com",
+  "password": "Password123*"
+}
+
+### 1.3 Login Administrador -> Obtiene tokens
+# @name loginAdmin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@lecturaabierta.com",
+  "password": "Admin123!"
+}
+
+### Variables extraídas de la respuesta del Administrador
+@adminToken = {{loginAdmin.response.body.data.accessToken}}
+@adminRefreshToken = {{loginAdmin.response.body.data.refreshToken}}
+
+### 1.4 Login Lector Estándar -> Obtiene token
+# @name loginLector
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "carlos.lector@lecturaabierta.com",
+  "password": "Password123*"
+}
+
+### Variable extraída de la respuesta del Lector
+@lectorToken = {{loginLector.response.body.data.accessToken}}
+
+### 1.5 [FALSA / ERROR] Login con contraseña errónea (401 Unauthorized)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@lecturaabierta.com",
+  "password": "ClaveIncorrecta123*"
+}
+
+### 1.6 [EXITOSA] Refrescar Access Token usando Refresh Token (200 OK)
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{adminRefreshToken}}"
+}
+
+### 1.7 [FALSA / ERROR] Refrescar con Refresh Token corrupto (403 Forbidden o 401 Unauthorized)
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "token-invalido-o-expirado"
+}
+
+### ===================================================
+### 2. CARGA DE CATÁLOGOS BASE (REQUISITOS PREVIOS)
+### ===================================================
+
+### 2.1 Crear Categoría de prueba (ADMIN)
+# @name crearCategoria
+POST {{baseUrl}}/categorias
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Literatura Latinoamericana",
+  "descripcion": "Obras clásicas del realismo mágico y narrativa regional"
+}
+
+### 2.2 Crear Autor de prueba (ADMIN)
+# @name crearAutor
+POST {{baseUrl}}/autores
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Gabriel García Márquez",
+  "nacionalidad": "Colombiana"
+}
+
+### 2.3 Crear Sede de biblioteca (ADMIN)
+# @name crearSede
+POST {{baseUrl}}/sedes
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Sede Central Riohacha",
+  "ciudad": "Riohacha",
+  "direccion": "Calle 1 # 1-01"
+}
+
+### 2.4 Crear Libro de prueba vinculado a Autor y Categoría (ADMIN)
+# @name crearLibro
+POST {{baseUrl}}/libros
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "titulo": "Cien Años de Soledad",
+  "isbn": "978-0307474728",
+  "ejemplaresDisponibles": 5,
+  "categoriaId": 1,
+  "autorId": 1
+}
+
+### ===================================================
+### 3. NIVEL 1: SIN AUTENTICACIÓN (PÚBLICO)
+### ===================================================
+
+### [EXITOSA] Lectores: Catálogo público sin credenciales (200 OK)
+GET {{baseUrl}}/lectores/publico
+Accept: application/json
+
+### [EXITOSA] Préstamos: Estadísticas públicas sin credenciales (200 OK)
+GET {{baseUrl}}/prestamos/estadisticas-publicas
+Accept: application/json
+
+### ===================================================
+### 4. NIVEL 2: SOLO AUTENTICACIÓN BÁSICA (x-api-key)
+### ===================================================
+
+### [FALSA / ERROR] Lectores: Petición sin cabecera x-api-key (401 Unauthorized)
+GET {{baseUrl}}/lectores/autenticado-basico
+Accept: application/json
+
+### [EXITOSA] Lectores: Petición con x-api-key válida (200 OK)
+GET {{baseUrl}}/lectores/autenticado-basico
+x-api-key: {{apiKey}}
+Accept: application/json
+
+### [FALSA / ERROR] Préstamos: Resumen interno sin cabecera (401 Unauthorized)
+GET {{baseUrl}}/prestamos/resumen-interno
+Accept: application/json
+
+### [EXITOSA] Préstamos: Resumen interno con x-api-key válida (200 OK)
+GET {{baseUrl}}/prestamos/resumen-interno
+x-api-key: {{apiKey}}
+Accept: application/json
+
+### ===================================================
+### 5. NIVEL 3: AUTENTICACIÓN JWT BEARER
+### ===================================================
+
+### [FALSA / ERROR] Préstamos: Consulta general sin cabecera Authorization (401 Unauthorized)
+GET {{baseUrl}}/prestamos
+Accept: application/json
+
+### [EXITOSA] Préstamos: Consulta general con JWT Bearer de Lector (200 OK)
+GET {{baseUrl}}/prestamos
+Authorization: Bearer {{lectorToken}}
+Accept: application/json
+
+### [EXITOSA] Lectores: Consulta con JWT Bearer de Lector (200 OK)
+GET {{baseUrl}}/lectores/jwt
+Authorization: Bearer {{lectorToken}}
+Accept: application/json
+
+### [EXITOSA] Préstamos: Consulta general con JWT Bearer de Administrador (200 OK)
+GET {{baseUrl}}/prestamos
+Authorization: Bearer {{adminToken}}
+Accept: application/json
+
+### ===================================================
+### 6. NIVEL 4: JWT + RBAC (ROLES ADMIN vs LECTOR)
+### ===================================================
+
+### 6.1 Control de Acceso sobre Entidad LECTORES
+
+### [FALSA / ERROR] Lector intenta registrar un nuevo lector (403 Forbidden)
+POST {{baseUrl}}/lectores
+Authorization: Bearer {{lectorToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Intento Denegado por Rol"
+}
+
+### [EXITOSA] Administrador registra un nuevo lector (201 Created)
+# @name nuevoLector
+POST {{baseUrl}}/lectores
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "nombre": "Álvaro Cepeda Samudio",
+  "descripcion": "Periodista y escritor"
+}
+
+### 6.2 Control de Acceso sobre Entidad PRÉSTAMOS
+
+### [FALSA / ERROR] Lector intenta autorizar/crear un préstamo directamente (403 Forbidden)
+POST {{baseUrl}}/prestamos
+Authorization: Bearer {{lectorToken}}
+Content-Type: application/json
+
+{
+  "lectorId": 1,
+  "ejemplarId": 1,
+  "fechaFin": "2026-11-15T00:00:00Z"
+}
+
+### [EXITOSA] Administrador autoriza y registra el préstamo (201 Created)
+POST {{baseUrl}}/prestamos
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "lectorId": 1,
+  "ejemplarId": 1,
+  "fechaFin": "2026-11-20T00:00:00Z"
+}
+
+### 7. DEMO EVALUACION: NUEVO ROL (BIBLIOTECARIO), USUARIO Y FLUJO BUSINESS
+### Crear un usuario con rol privilegiado: solo ADMIN, vía /api/usuarios
+POST {{baseUrl}}/usuarios
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "username": "andres",
+  "nombre": "Andres Gomez Fuentes",
+  "email": "andres.biblio@lecturaabierta.com",
+  "password": "Password123*",
+  "rol": "BIBLIOTECARIO"
+}

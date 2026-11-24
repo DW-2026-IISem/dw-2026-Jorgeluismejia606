@@ -1,0 +1,59 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+  <div>
+    <label for="categoria-nombre" class="mb-1 block text-sm font-medium text-slate-700">
+      Nombre <span class="text-red-500">*</span>
+    </label>
+    <input
+      id="categoria-nombre"
+      pInputText
+      formControlName="nombre"
+      placeholder="Novela"
+      class="w-full"
+    />
+    @if (form.controls.nombre.touched && form.controls.nombre.invalid) {
+      <p-message severity="error" size="small" variant="simple" styleClass="mt-1">
+        El nombre es obligatorio (máximo 120 caracteres).
+      </p-message>
+    }
+  </div>
+
+  <div>
+    <label for="categoria-descripcion" class="mb-1 block text-sm font-medium text-slate-700"
+      >Descripción</label
+    >
+    <textarea
+      id="categoria-descripcion"
+      pTextarea
+      formControlName="descripcion"
+      rows="3"
+      placeholder="Narrativa de ficción extensa"
+      class="w-full"
+    ></textarea>
+  </div>
+
+  <div>
+    <label for="categoria-status" class="mb-1 block text-sm font-medium text-slate-700"
+      >Estado</label
+    >
+    <p-select
+      [fluid]="true"
+      inputId="categoria-status"
+      formControlName="status"
+      [options]="statusOptions"
+      optionLabel="label"
+      optionValue="value"
+    />
+    @if (categoria()) {
+      <p class="mt-1 text-xs text-slate-500">El estado solo cambia con la baja lógica.</p>
+    }
+  </div>
+
+  <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+    <button pButton type="button" severity="secondary" outlined (click)="cancelled.emit()">
+      <span pButtonLabel>Cancelar</span>
+    </button>
+    <button pButton type="submit" [loading]="saving()">
+      <i pButtonIcon class="pi pi-check"></i><span pButtonLabel>Guardar</span>
+    </button>
+  </div>
+</form>

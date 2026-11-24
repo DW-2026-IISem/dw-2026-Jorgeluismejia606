@@ -1,0 +1,126 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+  <div class="grid gap-4 sm:grid-cols-2">
+    <div>
+      <label for="libro-titulo" class="mb-1 block text-sm font-medium text-slate-700"
+        >Título <span class="text-red-500">*</span></label
+      >
+      <input
+        id="libro-titulo"
+        pInputText
+        formControlName="titulo"
+        placeholder="Cien años de soledad"
+        class="w-full"
+      />
+      @if (form.controls.titulo.touched && form.controls.titulo.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1"
+          >El título es obligatorio.</p-message
+        >
+      }
+    </div>
+    <div>
+      <label for="libro-autor" class="mb-1 block text-sm font-medium text-slate-700"
+        >Autor <span class="text-red-500">*</span></label
+      >
+      <input
+        id="libro-autor"
+        pInputText
+        formControlName="autor"
+        placeholder="Gabriel García Márquez"
+        class="w-full"
+      />
+      @if (form.controls.autor.touched && form.controls.autor.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1"
+          >El autor es obligatorio.</p-message
+        >
+      }
+    </div>
+  </div>
+
+  <div>
+    <label for="libro-categoria" class="mb-1 block text-sm font-medium text-slate-700"
+      >Categoría <span class="text-red-500">*</span></label
+    >
+    <p-select
+      [fluid]="true"
+      inputId="libro-categoria"
+      formControlName="categoria_id"
+      [options]="categorias()"
+      optionLabel="nombre"
+      optionValue="id"
+      placeholder="Selecciona una categoría activa"
+      [filter]="true"
+    />
+    @if (form.controls.categoria_id.touched && form.controls.categoria_id.invalid) {
+      <p-message severity="error" size="small" variant="simple" styleClass="mt-1"
+        >Elige una categoría.</p-message
+      >
+    }
+  </div>
+
+  <div class="grid gap-4 sm:grid-cols-3">
+    <div>
+      <label for="libro-precio" class="mb-1 block text-sm font-medium text-slate-700"
+        >Precio de préstamo</label
+      >
+      <p-inputnumber
+        [fluid]="true"
+        inputId="libro-precio"
+        formControlName="precio_prestamo"
+        mode="decimal"
+        [min]="0.01"
+        [minFractionDigits]="2"
+        [maxFractionDigits]="2"
+      />
+      @if (form.controls.precio_prestamo.touched && form.controls.precio_prestamo.invalid) {
+        <p-message severity="error" size="small" variant="simple" styleClass="mt-1"
+          >Debe ser mayor que 0.</p-message
+        >
+      }
+    </div>
+    <div>
+      <label for="libro-cantidad" class="mb-1 block text-sm font-medium text-slate-700"
+        >Ejemplares disponibles</label
+      >
+      <p-inputnumber
+        [fluid]="true"
+        inputId="libro-cantidad"
+        formControlName="cantidad"
+        [min]="0"
+        [showButtons]="true"
+      />
+    </div>
+    <div>
+      <label for="libro-minimo" class="mb-1 block text-sm font-medium text-slate-700"
+        >Stock mínimo</label
+      >
+      <p-inputnumber
+        [fluid]="true"
+        inputId="libro-minimo"
+        formControlName="stock_minimo"
+        [min]="0"
+        [showButtons]="true"
+      />
+    </div>
+  </div>
+
+  <div>
+    <label for="libro-status" class="mb-1 block text-sm font-medium text-slate-700">Estado</label>
+    <p-select
+      [fluid]="true"
+      inputId="libro-status"
+      formControlName="status"
+      [options]="statusOptions"
+      optionLabel="label"
+      optionValue="value"
+    />
+  </div>
+
+  <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+    <button pButton type="button" severity="secondary" outlined (click)="cancelled.emit()">
+      <span pButtonLabel>Cancelar</span>
+    </button>
+    <button pButton type="submit" [loading]="saving()">
+      <i pButtonIcon class="pi pi-check"></i><span pButtonLabel>Guardar</span>
+    </button>
+  </div>
+</form>

@@ -1,0 +1,133 @@
+<app-page-header
+  title="Préstamos"
+  subtitle="Cada préstamo descuenta ejemplares; cancelarlo los restaura."
+>
+  <p-tag [value]="rows().length + ' activos'" severity="info" [rounded]="true" />
+  <ng-container *appHasPermission="'POST /api/prestamos'">
+    <a pButton routerLink="/prestamos/nuevo">
+      <i pButtonIcon class="pi pi-plus"></i><span pButtonLabel>Nuevo préstamo</span>
+    </a>
+  </ng-container>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
+}
+
+<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+  <p-table
+    [value]="visibleRows()"
+    [loading]="loading()"
+    [paginator]="visibleRows().length > 10"
+    [rows]="10"
+    dataKey="id"
+    tableStyleClass="min-w-3xl"
+  >
+    <ng-template #caption>
+      <div class="flex items-center gap-2">
+        <i class="pi pi-search text-slate-400"></i>
+        <input
+          pInputText
+          type="search"
+          aria-label="Buscar préstamos"
+          placeholder="Buscar por número o lector…"
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+          class="w-full"
+        />
+      </div>
+    </ng-template>
+    <ng-template #header>
+      <tr>
+        <th pSortableColumn="id"># <p-sort-icon field="id" /></th>
+        <th pSortableColumn="fecha_prestamo">Fecha <p-sort-icon field="fecha_prestamo" /></th>
+        <th>Lector</th>
+        <th class="text-right">Ejemplares</th>
+        <th>Estado</th>
+        <th class="text-right">Total</th>
+        <th class="w-40 text-right">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-row>
+      <tr>
+        <td class="font-medium">#{{ row.id }}</td>
+        <td class="text-sm">{{ row.fecha_prestamo | date: 'mediumDate' }}</td>
+        <td class="text-sm">{{ lectorNombre()(row.lector_id) }}</td>
+        <td class="text-right">{{ ejemplares(row) }}</td>
+        <td><app-status-tag [status]="row.status" /></td>
+        <td class="text-right font-medium">
+          {{ row.total | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}
+        </td>
+        <td>
+          <div class="flex justify-end gap-1">
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="secondary"
+              icon="pi pi-eye"
+              aria-label="Ver detalle"
+              pTooltip="Ver detalle"
+              (click)="openDetail(row)"
+            ></button>
+            <ng-container *appHasPermission="'PATCH /api/prestamos/:id/deactivate'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="warn"
+                icon="pi pi-ban"
+                aria-label="Cancelar préstamo"
+                pTooltip="Cancelar"
+                (click)="deactivate(row)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'DELETE /api/prestamos/:id'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="danger"
+                icon="pi pi-trash"
+                aria-label="Eliminar préstamo"
+                pTooltip="Eliminar"
+                (click)="remove(row)"
+              ></button>
+            </ng-container>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="7">
+          <app-empty-state
+            icon="pi pi-arrow-right-arrow-left"
+            title="Sin préstamos activos"
+            message="Registra el primero con «Nuevo préstamo»."
+          />
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [visible]="detailVisible()"
+  (visibleChange)="detailVisible.set($event)"
+  [header]="detailTitle()"
+  [modal]="true"
+  [dismissableMask]="true"
+  styleClass="w-full max-w-2xl mx-4"
+>
+  @if (selected(); as prestamo) {
+    <app-prestamo-detail
+      [prestamo]="prestamo"
+      [libros]="libros()"
+      [lectorNombre]="lectorNombre()(prestamo.lector_id)"
+    />
+  }
+</p-dialog>

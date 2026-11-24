@@ -1,0 +1,146 @@
+<app-page-header
+  title="Asignaciones usuario-rol"
+  subtitle="Sin asignación activa no hay permisos, por muchos roles que existan."
+>
+  <ng-container *appHasPermission="'POST /api/asignaciones-rol'">
+    <button pButton type="button" (click)="openAssign()">
+      <i pButtonIcon class="pi pi-link"></i><span pButtonLabel>Asignar rol</span>
+    </button>
+  </ng-container>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
+}
+
+<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+  <p-table [value]="visibleRows()" [loading]="loading()" dataKey="id" tableStyleClass="min-w-2xl">
+    <ng-template #caption>
+      <div class="grid gap-2 sm:grid-cols-2">
+        <p-select
+          [fluid]="true"
+          [options]="users()"
+          optionLabel="username"
+          [filter]="true"
+          filterBy="username,email"
+          placeholder="Filtrar por usuario"
+          [showClear]="true"
+          [ngModel]="userFilter()"
+          (ngModelChange)="userFilter.set($event ?? null)"
+        />
+        <p-select
+          [fluid]="true"
+          [options]="roles()"
+          optionLabel="name"
+          placeholder="Filtrar por rol"
+          [showClear]="true"
+          [ngModel]="roleFilter()"
+          (ngModelChange)="roleFilter.set($event ?? null)"
+        />
+      </div>
+    </ng-template>
+    <ng-template #header
+      ><tr>
+        <th>Usuario</th>
+        <th>Rol</th>
+        <th>Desde</th>
+        <th class="w-24 text-right">Acciones</th>
+      </tr></ng-template
+    >
+    <ng-template #body let-row>
+      <tr>
+        <td>
+          <div class="flex items-center gap-3">
+            <p-avatar [label]="initials(row.user?.username)" shape="circle" />
+            <div>
+              <p class="font-medium">{{ row.user?.username }}</p>
+              <p class="text-xs text-slate-400">{{ row.user?.email }}</p>
+            </div>
+          </div>
+        </td>
+        <td>
+          <p-tag
+            [value]="row.role?.name ?? 'Rol #' + row.role_id"
+            severity="info"
+            [rounded]="true"
+          />
+        </td>
+        <td class="text-sm text-slate-500">{{ row.createdAt | date: 'mediumDate' }}</td>
+        <td class="text-right">
+          <ng-container *appHasPermission="'PATCH /api/asignaciones-rol/:id/deactivate'">
+            <button
+              pButton
+              type="button"
+              text
+              rounded
+              severity="warn"
+              icon="pi pi-times"
+              aria-label="Retirar rol"
+              pTooltip="Retirar rol"
+              (click)="retire(row)"
+            ></button>
+          </ng-container>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage
+      ><tr>
+        <td colspan="4"><app-empty-state icon="pi pi-link" title="Sin asignaciones" /></td></tr
+    ></ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  header="Asignar rol"
+  [modal]="true"
+  [dismissableMask]="true"
+  styleClass="w-full max-w-lg mx-4"
+>
+  <div class="space-y-4">
+    <div>
+      <label for="assign-user" class="mb-1 block text-sm font-medium text-slate-700">Usuario</label>
+      <p-select
+        [fluid]="true"
+        inputId="assign-user"
+        [options]="users()"
+        optionLabel="username"
+        [filter]="true"
+        filterBy="username,email"
+        placeholder="Selecciona un usuario"
+        [ngModel]="selectedUser()"
+        (ngModelChange)="selectedUser.set($event)"
+      />
+    </div>
+    <div>
+      <label for="assign-role" class="mb-1 block text-sm font-medium text-slate-700">Rol</label>
+      <p-select
+        [fluid]="true"
+        inputId="assign-role"
+        [options]="roles()"
+        optionLabel="name"
+        placeholder="Selecciona un rol"
+        [ngModel]="selectedRole()"
+        (ngModelChange)="selectedRole.set($event)"
+      />
+    </div>
+    <p-message severity="warn" variant="simple" size="small">
+      No retires el último rol ADMIN: nadie podría volver a administrar el RBAC.
+    </p-message>
+    <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+      <button
+        pButton
+        type="button"
+        severity="secondary"
+        outlined
+        (click)="dialogVisible.set(false)"
+      >
+        <span pButtonLabel>Cancelar</span>
+      </button>
+      <button pButton type="button" [disabled]="!canSave()" [loading]="saving()" (click)="assign()">
+        <i pButtonIcon class="pi pi-check"></i><span pButtonLabel>Asignar</span>
+      </button>
+    </div>
+  </div>
+</p-dialog>

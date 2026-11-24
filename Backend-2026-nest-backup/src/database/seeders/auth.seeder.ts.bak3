@@ -1,0 +1,103 @@
+import * as bcrypt from 'bcrypt';
+import { UserModel, UserRole } from '../../features/auth/infrastructure/persistence/models/user.model';
+import { RoleModel } from '../../features/auth/infrastructure/persistence/models/role.model';
+import { ResourceModel } from '../../features/auth/infrastructure/persistence/models/resource.model';
+import { RoleResourceModel } from '../../features/auth/infrastructure/persistence/models/role-resource.model';
+
+type Recurso = [method: string, path: string, description: string, roles: UserRole[]];
+
+const { ADMIN, BIBLIOTECARIO, LECTOR, INVITADO } = UserRole;
+const TODOS = [ADMIN, BIBLIOTECARIO, LECTOR, INVITADO];
+const AUTENTICADOS = [ADMIN, BIBLIOTECARIO, LECTOR];
+const STAFF = [ADMIN, BIBLIOTECARIO];
+
+const RECURSOS: Recurso[] = [
+  ['GET', '/api/health', 'Estado del servicio', TODOS],
+  ['GET', '/api/autores', 'Listar autores', TODOS],
+  ['GET', '/api/libros', 'Listar libros', TODOS],
+  ['GET', '/api/libros/:id', 'Ver libro', TODOS],
+  ['POST', '/api/libros', 'Crear libro', STAFF],
+  ['PUT', '/api/libros/:id', 'Reemplazar libro', STAFF],
+  ['PATCH', '/api/libros/:id', 'Actualizar libro', STAFF],
+  ['DELETE', '/api/libros/:id', 'Eliminar libro', [ADMIN]],
+  ['PATCH', '/api/libros/:id/deactivate', 'Desactivar libro', STAFF],
+  ['GET', '/api/categorias', 'Listar categorías', TODOS],
+  ['GET', '/api/categorias/:id', 'Ver categoría', TODOS],
+  ['POST', '/api/categorias', 'Crear categoría', STAFF],
+  ['PUT', '/api/categorias/:id', 'Reemplazar categoría', STAFF],
+  ['PATCH', '/api/categorias/:id', 'Actualizar categoría', STAFF],
+  ['DELETE', '/api/categorias/:id', 'Eliminar categoría', [ADMIN]],
+  ['PATCH', '/api/categorias/:id/deactivate', 'Desactivar categoría', STAFF],
+  ['GET', '/api/lectores/publico', 'Listado público de lectores', TODOS],
+  ['GET', '/api/lectores/jwt', 'Listar lectores (JWT)', AUTENTICADOS],
+  ['POST', '/api/lectores', 'Crear lector', [ADMIN]],
+  ['GET', '/api/prestamos/estadisticas-publicas', 'Estadísticas públicas de préstamos', TODOS],
+  ['GET', '/api/prestamos', 'Listar préstamos', AUTENTICADOS],
+  ['POST', '/api/prestamos', 'Registrar préstamo', STAFF],
+  // CRUD de lectores (Fase I, protegido por PermissionGuard)
+  ['GET', '/api/lectores', 'Listar lectores', STAFF],
+  ['GET', '/api/lectores/:id', 'Ver lector', STAFF],
+  ['PUT', '/api/lectores/:id', 'Reemplazar lector', STAFF],
+  ['PATCH', '/api/lectores/:id', 'Actualizar lector', STAFF],
+  ['PATCH', '/api/lectores/:id/deactivate', 'Desactivar lector', STAFF],
+  ['DELETE', '/api/lectores/:id', 'Eliminar lector', [ADMIN]],
+  // Préstamos transaccionales (Fase I, protegido por PermissionGuard)
+  ['GET', '/api/prestamos/listado', 'Listar préstamos con detalle', AUTENTICADOS],
+  ['GET', '/api/prestamos/ejemplares-disponibles', 'Catálogo de ejemplares disponibles', AUTENTICADOS],
+  ['POST', '/api/prestamos/registrar', 'Registrar préstamo transaccional', STAFF],
+  ['PATCH', '/api/prestamos/:id/devolver', 'Devolver préstamo', STAFF],
+  ['PATCH', '/api/prestamos/:id/renovar', 'Renovar préstamo', STAFF],
+  // Administración del RBAC (solo ADMIN)
+  ['GET', '/api/usuarios', 'Listar usuarios', [ADMIN]],
+  ['GET', '/api/usuarios/:id', 'Ver usuario', [ADMIN]],
+  ['GET', '/api/usuarios/:id/permisos', 'Permisos efectivos de un usuario', [ADMIN]],
+  ['POST', '/api/usuarios', 'Crear usuario', [ADMIN]],
+  ['PATCH', '/api/usuarios/:id', 'Editar usuario o cambiar su rol', [ADMIN]],
+  ['PATCH', '/api/usuarios/:id/deactivate', 'Desactivar usuario', [ADMIN]],
+  ['PATCH', '/api/usuarios/:id/activate', 'Reactivar usuario', [ADMIN]],
+  ['DELETE', '/api/usuarios/:id', 'Eliminar usuario', [ADMIN]],
+  ['GET', '/api/roles', 'Listar roles', [ADMIN]],
+  ['POST', '/api/roles', 'Crear rol', [ADMIN]],
+  ['PATCH', '/api/roles/:id', 'Renombrar rol', [ADMIN]],
+  ['DELETE', '/api/roles/:id', 'Eliminar rol', [ADMIN]],
+  ['GET', '/api/recursos', 'Listar recursos', [ADMIN]],
+  ['POST', '/api/recursos', 'Crear recurso', [ADMIN]],
+  ['PATCH', '/api/recursos/:id', 'Editar recurso', [ADMIN]],
+  ['DELETE', '/api/recursos/:id', 'Eliminar recurso', [ADMIN]],
+  ['GET', '/api/concesiones-rol', 'Listar concesiones', [ADMIN]],
+  ['POST', '/api/concesiones-rol', 'Conceder permiso a un rol', [ADMIN]],
+  ['DELETE', '/api/concesiones-rol/:role_id/:resource_id', 'Revocar permiso de un rol', [ADMIN]],
+  ['GET', '/api/sesion/perfil', 'Perfil del usuario', AUTENTICADOS],
+  ['GET', '/api/permisos', 'Permisos efectivos', AUTENTICADOS],
+];
+
+const USUARIOS = [
+  { username: 'admin', nombre: 'Administrador', email: 'admin@lecturaabierta.com', password: 'Admin123!', rol: ADMIN },
+  { username: 'biblio', nombre: 'Bibliotecario', email: 'biblio@lecturaabierta.com', password: 'Biblio123!', rol: BIBLIOTECARIO },
+  { username: 'lector', nombre: 'Lector', email: 'lector@lecturaabierta.com', password: 'Lector123!', rol: LECTOR },
+];
+
+export async function seedAuth() {
+  const roles = new Map<string, RoleModel>();
+  for (const name of Object.values(UserRole)) {
+    const [role] = await RoleModel.findOrCreate({ where: { name } });
+    roles.set(name, role);
+  }
+
+  for (const [method, path, description, allowed] of RECURSOS) {
+    const [resource] = await ResourceModel.findOrCreate({ where: { method, path }, defaults: { description } });
+    for (const name of allowed) {
+      await RoleResourceModel.findOrCreate({
+        where: { role_id: roles.get(name)!.id, resource_id: resource.id },
+      });
+    }
+  }
+
+  for (const { password, ...data } of USUARIOS) {
+    await UserModel.findOrCreate({
+      where: { email: data.email },
+      defaults: { ...data, password_hash: await bcrypt.hash(password, 10), is_active: true },
+    });
+  }
+  console.log(`✅ Auth: ${roles.size} roles, ${RECURSOS.length} recursos, ${USUARIOS.length} usuarios`);
+}

@@ -1,0 +1,131 @@
+<app-page-header
+  title="Panel"
+  subtitle="Resumen de la red de bibliotecas a partir de los datos del backend."
+>
+  <button
+    pButton
+    type="button"
+    severity="secondary"
+    outlined
+    (click)="load()"
+    [loading]="loading()"
+  >
+    <i pButtonIcon class="pi pi-refresh"></i><span pButtonLabel>Actualizar</span>
+  </button>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
+}
+
+@if (loading()) {
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    @for (i of [1, 2, 3, 4]; track i) {
+      <p-skeleton height="6rem" borderRadius="1rem" />
+    }
+  </div>
+} @else {
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+      <p class="text-xs uppercase tracking-wider text-slate-400">Lectores activos</p>
+      <p class="mt-2 text-3xl font-semibold text-slate-900">{{ lectores().length }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+      <p class="text-xs uppercase tracking-wider text-slate-400">Libros</p>
+      <p class="mt-2 text-3xl font-semibold text-slate-900">{{ libros().length }}</p>
+      <p class="text-xs text-slate-500">
+        {{ categoriaCount() }} categorías · {{ stockBajo().length }} con stock bajo
+      </p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+      <p class="text-xs uppercase tracking-wider text-slate-400">Préstamos activos</p>
+      <p class="mt-2 text-3xl font-semibold text-slate-900">{{ prestamos().length }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 bg-white p-5">
+      <p class="text-xs uppercase tracking-wider text-slate-400">Ingresos por préstamos</p>
+      <p class="mt-2 text-3xl font-semibold text-emerald-600">
+        {{ ingresos() | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+      </p>
+    </div>
+  </div>
+
+  <div class="mt-6 grid gap-6 xl:grid-cols-2">
+    <ng-container *appHasPermission="'GET /api/libros'">
+      <p-card header="Stock bajo" class="block">
+        <p-table [value]="stockBajo()" [rows]="5" [paginator]="stockBajo().length > 5">
+          <ng-template #header
+            ><tr>
+              <th>Libro</th>
+              <th class="text-right">Disponibles</th>
+              <th class="text-right">Mínimo</th>
+            </tr></ng-template
+          >
+          <ng-template #body let-libro>
+            <tr>
+              <td class="text-sm">{{ libro.titulo }}</td>
+              <td class="text-right">
+                <p-tag
+                  [value]="libro.cantidad.toString()"
+                  [severity]="libro.cantidad === 0 ? 'danger' : 'warn'"
+                  [rounded]="true"
+                />
+              </td>
+              <td class="text-right text-sm">{{ libro.stock_minimo }}</td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage
+            ><tr>
+              <td colspan="3" class="py-4 text-center text-sm text-slate-500">
+                Todo el inventario está sano.
+              </td>
+            </tr></ng-template
+          >
+        </p-table>
+      </p-card>
+    </ng-container>
+
+    <ng-container *appHasPermission="'GET /api/prestamos'">
+      <p-card header="Últimos préstamos" class="block">
+        <p-table [value]="ultimosPrestamos()">
+          <ng-template #header
+            ><tr>
+              <th>#</th>
+              <th>Lector</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th class="text-right">Total</th>
+            </tr></ng-template
+          >
+          <ng-template #body let-prestamo>
+            <tr>
+              <td class="font-medium">#{{ prestamo.id }}</td>
+              <td class="text-sm">{{ lectorNombre()(prestamo.lector_id) }}</td>
+              <td class="text-sm">{{ prestamo.fecha_prestamo | date: 'shortDate' }}</td>
+              <td><app-status-tag [status]="prestamo.status" /></td>
+              <td class="text-right text-sm">
+                {{ prestamo.total | currency: 'COP' : 'symbol-narrow' : '1.0-0' }}
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage
+            ><tr>
+              <td colspan="5" class="py-4 text-center text-sm text-slate-500">
+                Sin préstamos todavía.
+              </td>
+            </tr></ng-template
+          >
+        </p-table>
+        <a pButton routerLink="/prestamos" text class="mt-2"><span pButtonLabel>Ver todos</span></a>
+      </p-card>
+    </ng-container>
+  </div>
+
+  @if (session.authEnabled && session.user(); as user) {
+    <p-card header="Sesión" class="mt-6 block">
+      <p class="text-sm text-slate-600">
+        <strong>{{ user.username }}</strong> · {{ session.roleLabel() }} ·
+        {{ session.permissionCount() }} permisos efectivos
+      </p>
+    </p-card>
+  }
+}

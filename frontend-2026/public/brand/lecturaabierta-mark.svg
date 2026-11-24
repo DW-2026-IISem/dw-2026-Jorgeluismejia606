@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 150" width="150" height="150" role="img" aria-label="LecturaAbierta">
+  <rect width="150" height="150" rx="32" fill="#10b981"/>
+  <path d="M30 44c16-6 32-4 45 6v62c-13-10-29-12-45-6z" fill="#ecfdf5"/>
+  <path d="M120 44c-16-6-32-4-45 6v62c13-10 29-12 45-6z" fill="#d1fae5"/>
+  <path d="M75 50v62" stroke="#047857" stroke-width="4" stroke-linecap="round"/>
+</svg>

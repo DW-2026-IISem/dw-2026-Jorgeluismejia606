@@ -1,0 +1,158 @@
+<app-page-header
+  title="Lectores"
+  subtitle="El backend solo lista los lectores activos; la baja lógica cambia su estado."
+>
+  <p-tag [value]="rows().length + ' activos'" severity="info" [rounded]="true" />
+  <ng-container *appHasPermission="'POST /api/lectores'">
+    <button pButton type="button" (click)="openCreate()">
+      <i pButtonIcon class="pi pi-plus"></i>
+      <span pButtonLabel>Nuevo lector</span>
+    </button>
+  </ng-container>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
+}
+
+<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+  <p-table
+    [value]="visibleRows()"
+    [loading]="loading()"
+    [paginator]="visibleRows().length > 10"
+    [rows]="10"
+    dataKey="id"
+    tableStyleClass="min-w-3xl"
+  >
+    <ng-template #caption>
+      <div class="flex items-center gap-2">
+        <i class="pi pi-search text-slate-400"></i>
+        <input
+          pInputText
+          type="search"
+          aria-label="Buscar lectores"
+          placeholder="Buscar por nombre, email, teléfono o dirección…"
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+          class="w-full"
+        />
+      </div>
+      @if (filter()) {
+        <p class="mt-2 text-xs text-slate-500">
+          {{ visibleRows().length }} de {{ rows().length }} coinciden con «{{ filter() }}».
+        </p>
+      }
+    </ng-template>
+
+    <ng-template #header>
+      <tr>
+        <th pSortableColumn="nombre">
+          <div class="flex items-center gap-1">Nombre <p-sort-icon field="nombre" /></div>
+        </th>
+        <th pSortableColumn="email">
+          <div class="flex items-center gap-1">Contacto <p-sort-icon field="email" /></div>
+        </th>
+        <th>Dirección</th>
+        <th>Estado</th>
+        <th class="w-40 text-right">Acciones</th>
+      </tr>
+    </ng-template>
+
+    <ng-template #body let-lector>
+      <tr>
+        <td>
+          <p class="font-medium text-slate-800">{{ lector.nombre }}</p>
+          <p class="text-xs text-slate-400">#{{ lector.id }}</p>
+        </td>
+        <td>
+          <p class="text-sm text-slate-700">{{ lector.email || '—' }}</p>
+          <p class="text-xs text-slate-400">{{ lector.telefono || 'Sin teléfono' }}</p>
+        </td>
+        <td class="text-sm text-slate-600">{{ lector.direccion || '—' }}</td>
+        <td><app-status-tag [status]="lector.status" /></td>
+        <td>
+          <div class="flex justify-end gap-1">
+            <ng-container *appHasPermission="'PATCH /api/lectores/:id'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="secondary"
+                icon="pi pi-pencil"
+                aria-label="Editar lector"
+                pTooltip="Editar"
+                (click)="openEdit(lector)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'PATCH /api/lectores/:id/deactivate'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="warn"
+                icon="pi pi-ban"
+                aria-label="Dar de baja al lector"
+                pTooltip="Baja lógica"
+                (click)="deactivate(lector)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'DELETE /api/lectores/:id'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="danger"
+                icon="pi pi-trash"
+                aria-label="Eliminar lector"
+                pTooltip="Eliminar"
+                (click)="remove(lector)"
+              ></button>
+            </ng-container>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="5">
+          @if (filter()) {
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ningún lector coincide con la búsqueda. Borra el filtro para ver todos."
+            />
+          } @else {
+            <app-empty-state
+              icon="pi pi-users"
+              title="Sin lectores activos"
+              message="Crea el primero con «Nuevo lector» o ejecuta el seeder del backend."
+            />
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [header]="title()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  styleClass="w-full max-w-2xl mx-4"
+>
+  <app-lector-form
+    [lector]="editing()"
+    [saving]="saving()"
+    [resetKey]="resetKey()"
+    (saved)="save($event)"
+    (cancelled)="dialogVisible.set(false)"
+  />
+</p-dialog>

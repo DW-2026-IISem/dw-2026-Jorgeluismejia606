@@ -1,0 +1,67 @@
+<form [formGroup]="form" (ngSubmit)="submit()" class="space-y-4">
+  <div>
+    <label for="detalle-prestamo" class="mb-1 block text-sm font-medium text-slate-700"
+      >Préstamo *</label
+    >
+    <p-select
+      [fluid]="true"
+      inputId="detalle-prestamo"
+      formControlName="prestamo_id"
+      [options]="prestamos()"
+      optionValue="id"
+      optionLabel="id"
+      placeholder="Selecciona un préstamo activo"
+      [filter]="true"
+    >
+      <ng-template #selectedItem let-prestamo
+        ><span>Préstamo #{{ prestamo.id }}</span></ng-template
+      >
+      <ng-template #item let-prestamo
+        ><span>Préstamo #{{ prestamo.id }}</span></ng-template
+      >
+    </p-select>
+  </div>
+  <div>
+    <label for="detalle-libro" class="mb-1 block text-sm font-medium text-slate-700">Libro *</label>
+    <p-select
+      [fluid]="true"
+      inputId="detalle-libro"
+      formControlName="libro_id"
+      [options]="libros()"
+      optionLabel="titulo"
+      optionValue="id"
+      placeholder="Selecciona un libro"
+      [filter]="true"
+    />
+  </div>
+  <div>
+    <label for="detalle-cantidad" class="mb-1 block text-sm font-medium text-slate-700"
+      >Cantidad *</label
+    >
+    <p-inputnumber
+      [fluid]="true"
+      inputId="detalle-cantidad"
+      formControlName="cantidad"
+      [min]="1"
+      [showButtons]="true"
+    />
+    @if (form.controls.cantidad.touched && form.controls.cantidad.invalid) {
+      <p-message severity="error" size="small" variant="simple" styleClass="mt-1"
+        >La cantidad debe ser al menos 1.</p-message
+      >
+    }
+    @if (line()) {
+      <p class="mt-1 text-xs text-slate-500">
+        Solo la cantidad es editable; el backend ajusta stock y totales.
+      </p>
+    }
+  </div>
+  <div class="flex justify-end gap-2 border-t border-slate-100 pt-4">
+    <button pButton type="button" severity="secondary" outlined (click)="cancelled.emit()">
+      <span pButtonLabel>Cancelar</span>
+    </button>
+    <button pButton type="submit" [loading]="saving()">
+      <i pButtonIcon class="pi pi-check"></i><span pButtonLabel>Guardar</span>
+    </button>
+  </div>
+</form>

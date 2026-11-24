@@ -1,0 +1,141 @@
+<app-page-header
+  title="Detalle de préstamos"
+  subtitle="Líneas de cada préstamo: corregirlas ajusta ejemplares y totales."
+>
+  <p-tag [value]="rows().length + ' líneas'" severity="info" [rounded]="true" />
+  <ng-container *appHasPermission="'POST /api/detalle-prestamos'">
+    <button pButton type="button" (click)="openCreate()">
+      <i pButtonIcon class="pi pi-plus"></i><span pButtonLabel>Agregar línea</span>
+    </button>
+  </ng-container>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
+}
+
+<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+  <p-table
+    [value]="visibleRows()"
+    [loading]="loading()"
+    [paginator]="visibleRows().length > 10"
+    [rows]="10"
+    dataKey="id"
+    tableStyleClass="min-w-3xl"
+  >
+    <ng-template #caption>
+      <div class="flex items-center gap-2">
+        <i class="pi pi-search text-slate-400"></i>
+        <input
+          pInputText
+          type="search"
+          aria-label="Buscar líneas"
+          placeholder="Buscar por préstamo (#3) o libro…"
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+          class="w-full"
+        />
+      </div>
+    </ng-template>
+    <ng-template #header>
+      <tr>
+        <th>Préstamo</th>
+        <th>Libro</th>
+        <th class="text-right">Cant.</th>
+        <th class="text-right">Precio</th>
+        <th class="text-right">Total</th>
+        <th>Estado</th>
+        <th class="w-40 text-right">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-row>
+      <tr>
+        <td class="font-medium">#{{ row.prestamo_id }}</td>
+        <td class="text-sm">{{ libroTitulo()(row.libro_id) }}</td>
+        <td class="text-right">{{ row.cantidad }}</td>
+        <td class="text-right text-sm">
+          {{ row.precio_unitario | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}
+        </td>
+        <td class="text-right font-medium">
+          {{ row.total_linea | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}
+        </td>
+        <td><app-status-tag [status]="row.status" /></td>
+        <td>
+          <div class="flex justify-end gap-1">
+            <ng-container *appHasPermission="'PATCH /api/detalle-prestamos/:id'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="secondary"
+                icon="pi pi-pencil"
+                aria-label="Editar línea"
+                pTooltip="Editar cantidad"
+                (click)="openEdit(row)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'PATCH /api/detalle-prestamos/:id/deactivate'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="warn"
+                icon="pi pi-ban"
+                aria-label="Retirar línea"
+                pTooltip="Baja lógica"
+                (click)="deactivate(row)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'DELETE /api/detalle-prestamos/:id'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="danger"
+                icon="pi pi-trash"
+                aria-label="Eliminar línea"
+                pTooltip="Eliminar"
+                (click)="remove(row)"
+              ></button>
+            </ng-container>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="7">
+          <app-empty-state
+            icon="pi pi-list"
+            title="Sin líneas activas"
+            message="Las líneas se crean al registrar un préstamo."
+          />
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [header]="title()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  styleClass="w-full max-w-lg mx-4"
+>
+  <app-detalle-prestamo-form
+    [line]="editing()"
+    [prestamos]="prestamos()"
+    [libros]="libros()"
+    [saving]="saving()"
+    [resetKey]="resetKey()"
+    (saved)="save($event)"
+    (cancelled)="dialogVisible.set(false)"
+  />
+</p-dialog>

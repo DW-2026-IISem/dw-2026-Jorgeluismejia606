@@ -1,0 +1,176 @@
+<app-page-header
+  title="Nuevo préstamo"
+  subtitle="El borrador vive en memoria: el stock solo cambia al confirmar."
+>
+  <a pButton routerLink="/prestamos" severity="secondary" outlined>
+    <i pButtonIcon class="pi pi-arrow-left"></i><span pButtonLabel>Volver</span>
+  </a>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
+}
+
+<div class="grid gap-6 lg:grid-cols-3">
+  <div class="space-y-6 lg:col-span-2">
+    <p-card header="Lector" class="block">
+      <label for="prestamo-lector" class="mb-1 block text-sm font-medium text-slate-700"
+        >Lector *</label
+      >
+      <p-select
+        [fluid]="true"
+        inputId="prestamo-lector"
+        [ngModel]="lectorId()"
+        (ngModelChange)="lectorId.set($event)"
+        [options]="lectores()"
+        optionLabel="nombre"
+        optionValue="id"
+        [filter]="true"
+        placeholder="Selecciona un lector"
+        [loading]="loading()"
+      />
+    </p-card>
+
+    <p-card header="Libros" class="block">
+      <div class="grid gap-3 sm:grid-cols-[1fr_8rem_auto] sm:items-end">
+        <div>
+          <label for="prestamo-libro" class="mb-1 block text-sm font-medium text-slate-700"
+            >Libro</label
+          >
+          <p-select
+            [fluid]="true"
+            inputId="prestamo-libro"
+            [ngModel]="selectedLibroId()"
+            (ngModelChange)="selectedLibroId.set($event)"
+            [options]="libros()"
+            optionLabel="titulo"
+            optionValue="id"
+            [filter]="true"
+            placeholder="Buscar libro"
+          />
+        </div>
+        <div>
+          <label for="prestamo-cantidad" class="mb-1 block text-sm font-medium text-slate-700"
+            >Cantidad</label
+          >
+          <p-inputnumber
+            [fluid]="true"
+            inputId="prestamo-cantidad"
+            [ngModel]="cantidad()"
+            (ngModelChange)="cantidad.set($event ?? 1)"
+            [min]="1"
+            [showButtons]="true"
+          />
+        </div>
+        <button pButton type="button" (click)="addLine()">
+          <i pButtonIcon class="pi pi-plus"></i><span pButtonLabel>Agregar</span>
+        </button>
+      </div>
+
+      <div class="mt-4 overflow-x-auto">
+        <p-table [value]="lines()" tableStyleClass="min-w-xl">
+          <ng-template #header>
+            <tr>
+              <th>Libro</th>
+              <th class="text-right">Precio</th>
+              <th class="text-right">Cantidad</th>
+              <th class="text-right">Total línea</th>
+              <th class="w-12"></th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-line let-index="rowIndex">
+            <tr>
+              <td>{{ libroById().get(line.libro_id)?.titulo || 'Libro #' + line.libro_id }}</td>
+              <td class="text-right">
+                {{
+                  libroById().get(line.libro_id)?.precio_prestamo
+                    | currency: 'COP' : 'symbol-narrow' : '1.0-2'
+                }}
+              </td>
+              <td class="text-right">{{ line.cantidad }}</td>
+              <td class="text-right">
+                {{ lineTotal(line) | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}
+              </td>
+              <td class="text-right">
+                <button
+                  pButton
+                  type="button"
+                  text
+                  rounded
+                  severity="danger"
+                  icon="pi pi-times"
+                  aria-label="Quitar línea"
+                  (click)="removeLine(index)"
+                ></button>
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template #emptymessage>
+            <tr>
+              <td colspan="5" class="py-6 text-center text-sm text-slate-500">
+                Agrega al menos un libro.
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-card>
+  </div>
+
+  <p-card header="Totales" class="block lg:sticky lg:top-20 lg:self-start">
+    <div class="grid gap-3 sm:grid-cols-2">
+      <div>
+        <label for="prestamo-impuesto" class="mb-1 block text-sm font-medium text-slate-700"
+          >Impuesto</label
+        >
+        <p-inputnumber
+          [fluid]="true"
+          inputId="prestamo-impuesto"
+          [ngModel]="impuesto()"
+          (ngModelChange)="impuesto.set($event ?? 0)"
+          [min]="0"
+        />
+      </div>
+      <div>
+        <label for="prestamo-descuentos" class="mb-1 block text-sm font-medium text-slate-700"
+          >Descuentos</label
+        >
+        <p-inputnumber
+          [fluid]="true"
+          inputId="prestamo-descuentos"
+          [ngModel]="descuentos()"
+          (ngModelChange)="descuentos.set($event ?? 0)"
+          [min]="0"
+        />
+      </div>
+    </div>
+    <dl class="mt-4 space-y-2 text-sm">
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Subtotal</dt>
+        <dd class="font-medium">{{ subtotal() | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Impuesto</dt>
+        <dd>{{ impuesto() | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="text-slate-500">Descuentos</dt>
+        <dd>-{{ descuentos() | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</dd>
+      </div>
+      <div class="flex justify-between border-t border-slate-200 pt-2 text-base">
+        <dt class="font-semibold">Total</dt>
+        <dd class="font-semibold">{{ total() | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</dd>
+      </div>
+    </dl>
+    <button
+      pButton
+      type="button"
+      class="mt-4 w-full"
+      [disabled]="!canSave()"
+      [loading]="saving()"
+      (click)="save()"
+    >
+      <i pButtonIcon class="pi pi-check"></i><span pButtonLabel>Registrar préstamo</span>
+    </button>
+  </p-card>
+</div>

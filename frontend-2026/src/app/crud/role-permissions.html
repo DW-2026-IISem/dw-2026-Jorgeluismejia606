@@ -1,0 +1,95 @@
+<section class="rp">
+  <header class="rp-header">
+    <h1>Roles y permisos</h1>
+    <p>Configura los permisos de crear, consultar, actualizar y eliminar por entidad.</p>
+  </header>
+
+  <div class="rp-card rp-toolbar">
+    <div class="rp-role">
+      <label for="rp-role">Rol</label>
+      <div class="rp-role-line">
+        <p-select
+          inputId="rp-role"
+          [options]="roles()"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Elegir rol"
+          [ngModel]="roleId()"
+          (ngModelChange)="selectRole($event)"
+          [disabled]="saving()"
+        />
+        @if (currentRole(); as role) {
+          <span class="rp-role-desc">
+            <strong>{{ role.name }}</strong> · {{ role.description || 'Sin descripción' }}
+          </span>
+        }
+      </div>
+      <p class="rp-hint">
+        <strong>Permisos de recursos</strong><br />
+        Cada selección habilita las operaciones asociadas a esa entidad.
+      </p>
+    </div>
+
+    <div class="rp-actions">
+      <p-button label="Marcar todo" [text]="true" [disabled]="!roleId() || saving()" (onClick)="markAll()" />
+      <p-button label="Desmarcar todo" [text]="true" [disabled]="!roleId() || saving()" (onClick)="unmarkAll()" />
+      <p-button
+        label="Guardar permisos"
+        icon="pi pi-save"
+        [loading]="saving()"
+        [disabled]="!dirty() || saving()"
+        (onClick)="save()"
+      />
+    </div>
+  </div>
+
+  @if (error()) {
+    <p class="rp-error">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="rp-muted">Cargando permisos…</p>
+  } @else {
+    <div class="rp-card rp-table-wrap">
+      <table class="rp-table">
+        <thead>
+          <tr>
+            <th>Recurso (Entidad)</th>
+            <th>Crear (C)</th>
+            <th>Leer (R)</th>
+            <th>Actualizar (U)</th>
+            <th>Eliminar (D)</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.key) {
+            <tr>
+              <td>{{ row.label }}</td>
+              @for (op of ops; track op) {
+                <td class="rp-cell">
+                  @if (row.cells[op].state === 'na') {
+                    <span class="rp-muted">—</span>
+                  } @else {
+                    <input
+                      type="checkbox"
+                      [checked]="row.cells[op].state === 'all'"
+                      [indeterminate]="row.cells[op].state === 'some'"
+                      [disabled]="!roleId() || saving()"
+                      [title]="row.cells[op].ids.length + ' endpoint(s)'"
+                      [attr.aria-label]="op + ' ' + row.label"
+                      (change)="toggle(row.cells[op])"
+                    />
+                  }
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="rp-muted">No hay recursos registrados.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

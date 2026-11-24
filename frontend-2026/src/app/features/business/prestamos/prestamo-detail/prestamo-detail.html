@@ -1,0 +1,64 @@
+<div class="space-y-4">
+  <dl class="grid gap-3 text-sm sm:grid-cols-3">
+    <div>
+      <dt class="text-slate-500">Lector</dt>
+      <dd class="font-medium">{{ lectorNombre() || 'Lector #' + prestamo().lector_id }}</dd>
+    </div>
+    <div>
+      <dt class="text-slate-500">Fecha</dt>
+      <dd>{{ prestamo().fecha_prestamo | date: 'medium' }}</dd>
+    </div>
+    <div>
+      <dt class="text-slate-500">Estado</dt>
+      <dd><app-status-tag [status]="prestamo().status" /></dd>
+    </div>
+  </dl>
+
+  <div class="overflow-x-auto">
+    <p-table [value]="prestamo().items ?? []" tableStyleClass="min-w-lg">
+      <ng-template #header>
+        <tr>
+          <th>Libro</th>
+          <th class="text-right">Cant.</th>
+          <th class="text-right">Precio</th>
+          <th class="text-right">Total</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-item>
+        <tr [class.opacity-50]="item.status !== 'active'">
+          <td>{{ libroTitulo()(item.libro_id) }}</td>
+          <td class="text-right">{{ item.cantidad }}</td>
+          <td class="text-right">
+            {{ item.precio_unitario | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}
+          </td>
+          <td class="text-right">
+            {{ item.total_linea | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+
+  <dl class="ml-auto max-w-xs space-y-1 text-sm">
+    <div class="flex justify-between">
+      <dt class="text-slate-500">Ejemplares</dt>
+      <dd>{{ itemCount() }}</dd>
+    </div>
+    <div class="flex justify-between">
+      <dt class="text-slate-500">Subtotal</dt>
+      <dd>{{ prestamo().subtotal | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</dd>
+    </div>
+    <div class="flex justify-between">
+      <dt class="text-slate-500">Impuesto</dt>
+      <dd>{{ prestamo().impuesto | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</dd>
+    </div>
+    <div class="flex justify-between">
+      <dt class="text-slate-500">Descuentos</dt>
+      <dd>-{{ prestamo().descuentos | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</dd>
+    </div>
+    <div class="flex justify-between border-t border-slate-200 pt-1 font-semibold">
+      <dt>Total</dt>
+      <dd>{{ prestamo().total | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}</dd>
+    </div>
+  </dl>
+</div>

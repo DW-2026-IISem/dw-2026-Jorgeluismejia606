@@ -1,0 +1,168 @@
+<app-page-header
+  title="Libros"
+  subtitle="Catálogo de libros con su categoría, precio de préstamo y ejemplares disponibles."
+>
+  <p-tag [value]="rows().length + ' activos'" severity="info" [rounded]="true" />
+  <p-tag [value]="lowStockCount() + ' con stock bajo'" severity="warn" [rounded]="true" />
+  <ng-container *appHasPermission="'POST /api/libros'">
+    <button pButton type="button" (click)="openCreate()">
+      <i pButtonIcon class="pi pi-plus"></i><span pButtonLabel>Nuevo libro</span>
+    </button>
+  </ng-container>
+</app-page-header>
+
+@if (error()) {
+  <p-message severity="error" styleClass="mb-4 w-full">{{ error() }}</p-message>
+}
+
+<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+  <p-table
+    [value]="visibleRows()"
+    [loading]="loading()"
+    [paginator]="visibleRows().length > 10"
+    [rows]="10"
+    dataKey="id"
+    tableStyleClass="min-w-4xl"
+  >
+    <ng-template #caption>
+      <div class="flex items-center gap-2">
+        <i class="pi pi-search text-slate-400"></i>
+        <input
+          pInputText
+          type="search"
+          aria-label="Buscar libros"
+          placeholder="Buscar por título, autor o categoría…"
+          [value]="filter()"
+          (input)="filter.set($any($event.target).value)"
+          class="w-full"
+        />
+      </div>
+      @if (filter()) {
+        <p class="mt-2 text-xs text-slate-500">
+          {{ visibleRows().length }} de {{ rows().length }} coinciden con «{{ filter() }}».
+        </p>
+      }
+    </ng-template>
+    <ng-template #header>
+      <tr>
+        <th pSortableColumn="titulo">
+          <div class="flex items-center gap-1">Título <p-sort-icon field="titulo" /></div>
+        </th>
+        <th>Categoría</th>
+        <th pSortableColumn="precio_prestamo" class="text-right">Precio</th>
+        <th pSortableColumn="cantidad" class="text-right">Disponibles</th>
+        <th>Estado</th>
+        <th class="w-40 text-right">Acciones</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-row>
+      <tr>
+        <td>
+          <p class="font-medium text-slate-800">{{ row.titulo }}</p>
+          <p class="text-xs text-slate-400">{{ row.autor }} · #{{ row.id }}</p>
+        </td>
+        <td>
+          <p-tag
+            [value]="categoriaNombre()(row.categoria_id)"
+            severity="secondary"
+            [rounded]="true"
+          />
+        </td>
+        <td class="text-right text-sm">
+          {{ row.precio_prestamo | currency: 'COP' : 'symbol-narrow' : '1.0-2' }}
+        </td>
+        <td class="text-right">
+          <p-tag
+            [value]="row.cantidad.toString()"
+            [severity]="stockSeverity(row)"
+            [rounded]="true"
+          />
+          <p class="text-[11px] text-slate-400">mín. {{ row.stock_minimo }}</p>
+        </td>
+        <td><app-status-tag [status]="row.status" /></td>
+        <td>
+          <div class="flex justify-end gap-1">
+            <ng-container *appHasPermission="'PATCH /api/libros/:id'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="secondary"
+                icon="pi pi-pencil"
+                aria-label="Editar libro"
+                pTooltip="Editar"
+                (click)="openEdit(row)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'PATCH /api/libros/:id/deactivate'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="warn"
+                icon="pi pi-ban"
+                aria-label="Dar de baja el libro"
+                pTooltip="Baja lógica"
+                (click)="deactivate(row)"
+              ></button>
+            </ng-container>
+            <ng-container *appHasPermission="'DELETE /api/libros/:id'">
+              <button
+                pButton
+                type="button"
+                text
+                rounded
+                severity="danger"
+                icon="pi pi-trash"
+                aria-label="Eliminar libro"
+                pTooltip="Eliminar"
+                (click)="remove(row)"
+              ></button>
+            </ng-container>
+          </div>
+        </td>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6">
+          @if (filter()) {
+            <app-empty-state
+              icon="pi pi-search"
+              title="Sin coincidencias"
+              message="Ningún libro coincide con la búsqueda."
+            />
+          } @else {
+            <app-empty-state
+              icon="pi pi-book"
+              title="Sin libros activos"
+              message="Crea el primero o ejecuta el seeder del backend."
+            />
+          }
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
+
+<p-dialog
+  [visible]="dialogVisible()"
+  (visibleChange)="dialogVisible.set($event)"
+  [header]="title()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [dismissableMask]="true"
+  styleClass="w-full max-w-2xl mx-4"
+>
+  <app-libro-form
+    [libro]="editing()"
+    [categorias]="categorias()"
+    [saving]="saving()"
+    [resetKey]="resetKey()"
+    (saved)="save($event)"
+    (cancelled)="dialogVisible.set(false)"
+  />
+</p-dialog>

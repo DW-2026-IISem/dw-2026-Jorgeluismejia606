@@ -1,0 +1,74 @@
+<div class="flex flex-col gap-6">
+  <p-card header="Objeto libro" subheader="signal<Libro> · computed · effect">
+    <div class="flex flex-col gap-4">
+      <div>
+        <label for="ejemplo-titulo" class="mb-1 block text-sm font-medium text-slate-700"
+          >Título</label
+        >
+        <input
+          id="ejemplo-titulo"
+          pInputText
+          class="w-full"
+          [value]="libro().titulo"
+          (input)="cambiarTitulo($event)"
+        />
+        <p class="mt-1 text-xs text-slate-500">Vista previa: {{ libro().titulo }}</p>
+      </div>
+
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs uppercase tracking-wider text-slate-400">Precio de préstamo</p>
+          <p class="text-2xl font-bold text-slate-900">{{ libro().precio }}</p>
+          <p class="text-sm text-slate-500">
+            Precio final con IVA (19 %): <strong>{{ precioFinal() }}</strong>
+          </p>
+        </div>
+        <p-tag [value]="estadoTexto()" [severity]="libro().activo ? 'success' : 'danger'" />
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button pButton type="button" (click)="variarPrecio(1000)">
+          <span pButtonLabel>+1000</span>
+        </button>
+        <button pButton type="button" severity="secondary" outlined (click)="variarPrecio(-1000)">
+          <span pButtonLabel>-1000</span>
+        </button>
+        <button pButton type="button" severity="warn" outlined (click)="alternarEstado()">
+          <span pButtonLabel>Cambiar estado</span>
+        </button>
+        <button pButton type="button" severity="secondary" text (click)="reiniciar()">
+          <span pButtonLabel>Reiniciar</span>
+        </button>
+      </div>
+
+      @if (libro().activo) {
+        <p-message severity="success" variant="simple">
+          Libro activo: la API lo devolvería en <code>GET /api/libros</code>.
+        </p-message>
+      } @else {
+        <p-message severity="warn" variant="simple">
+          Libro inactivo: el borrado lógico lo oculta de las listas.
+        </p-message>
+      }
+    </div>
+  </p-card>
+
+  <div class="grid gap-6 md:grid-cols-2">
+    <p-card header="Signals">
+      <p class="text-sm text-slate-600">
+        <code>libro</code> es el estado; <code>precioFinal</code> y <code>estadoTexto</code> se
+        derivan con <code>computed</code>; el <code>effect</code> escribe en la consola en cada
+        cambio.
+      </p>
+    </p-card>
+    <p-card header="Estilos">
+      <p class="text-sm text-slate-600">
+        Tailwind y Aura dan el aspecto. Esta caja es la excepción:
+      </p>
+      <div class="ejemplo-alcance mt-4 text-sm text-slate-700">
+        <code>.ejemplo-alcance</code> vive en <code>ejemplo.css</code> y solo afecta a este
+        componente.
+      </div>
+    </p-card>
+  </div>
+</div>
